@@ -1,6 +1,6 @@
 ---
-title: "Quarto Presentations"
-subtitle: "Create beautiful interactive slide decks with Reveal.js"
+title: "Real Property Tax in Baltimore"
+subtitle: "Flaws in the current SDAT assessments of land"
 format:
   revealjs: 
     slide-number: true
