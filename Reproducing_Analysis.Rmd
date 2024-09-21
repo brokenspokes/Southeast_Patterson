@@ -4,89 +4,62 @@ subtitle: "Flaws in the current SDAT assessments of land"
 author: "Joshua Spokes"
 ---
 
-```{r pull-city-data}
+```{r pull-city-data, cache = TRUE}
 # Load necessary libraries
 library(httr)
 library(jsonlite)
 library(sf)
 library(pbapply)
+library(stringr)
+library(dplyr)
 
-# Define the URL of the ArcGIS REST service
-url <- "https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query"
+# I am so angry that this works
+baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&where=1=1&outFields=*&f=geojson")
 
-# Function to get the total number of features
-get_feature_count <- function(url) {
-  query <- list(
-    where = "1=1",
-    returnCountOnly = "true",
-    f = "json"
-  )
-  response <- GET(url, query = query)
-  content <- content(response, "text")
-  count <- fromJSON(content)$count
-  return(count)
-}
-
-# Function to download features in chunks with progress bar
-download_features <- function(url, chunk_size = 1000) {
-  # Get total number of features
-  total_features <- get_feature_count(url)
-  
-  # Create an empty list to store chunks
-  feature_chunks <- list()
-  
-  # Function to query data in chunks
-  query_chunk <- function(offset) {
-    query <- list(
-      where = "1=1",
-      outFields = "*",
-      returnGeometry = "true",
-      f = "json",
-      resultOffset = offset,
-      resultRecordCount = chunk_size
-    )
-    response <- GET(url, query = query)
-    content <- content(response, "text")
-    features <- fromJSON(content)$features
-    return(features)
-  }
-
-  # Progress bar and download loop
-  pblapply(seq(0, total_features - 1, by = chunk_size), function(offset) {
-    feature_chunks[[length(feature_chunks) + 1]] <<- query_chunk(offset)
-  })
-  
-  # Extract attributes (non-geometry data)
-  all_attributes <- do.call(rbind, lapply(feature_chunks, function(x) {
-    do.call(rbind, lapply(x, function(f) f$attributes))
-  }))
-  
-  # Extract polygon geometries
-  all_geometries <- lapply(feature_chunks, function(chunk) {
-    lapply(chunk, function(f) {
-      if (!is.null(f$geometry$rings)) {
-        st_polygon(f$geometry$rings)
-      } else {
-        NULL
-      }
-    })
-  })
-  
-  # Flatten the geometry list
-  all_geometries <- do.call(c, all_geometries)
-  all_geometries <- st_sfc(all_geometries, crs = 4326)
-
-  # Create an sf object combining attributes and geometries
-  Baltimore <- st_sf(all_attributes, geometry = all_geometries)
-
-  return(Baltimore)
-}
-
-# Download features and store them in 'Baltimore'
-Baltimore <- download_features(url)
-
-# Check the sf object
-print(Baltimore)
+baltimore$PIN <- as.character(baltimore$PIN)
 
 
+```
+
+```{r initial analysis}
+initial_analysis_sample = c("1783017A",
+                            "1783017",
+                            "1784040",
+                            "1784036",
+                            "1784035",
+                            "1784034",
+                            "1784033",
+                            "1784032",
+                            "1784031",
+                            "1784030",
+                            "1784029",
+                            "1784028",
+                            "1784027",
+                            "1784026",
+                            "1784025",
+                            "1784024",
+                            "1784023",
+                            "1784022",
+                            "1784021",
+                            "1784020",
+                            "1784019",
+                            "1784018",
+                            "1784017",
+                            "1784016",
+                            "1784061",
+                            "1784060",
+                            "1784059",
+                            "1784058",
+                            "1784057",
+                            "1784056",
+                            "1784055",
+                            "1784054",
+                            "1784053",
+                            "1784052")
+
+filter(baltimore,
+       PIN %in% initial_analysis_sample) -> initial_analysis_lots
+
+filter(baltimore,
+       str_detect(PIN, "^1784")) -> bk_rofo_block
 ```
