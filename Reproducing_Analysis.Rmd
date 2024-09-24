@@ -21,10 +21,11 @@ baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityV
 baltimore_valid <- st_make_valid(baltimore)
 
 mutate(baltimore_valid,
+       total_assessed_value = CURRLAND + CURRIMPR + LANDEXMP + IMPREXMP,
        area_acres = set_units(st_area(geometry), acres),
        area_ft_sq = set_units(st_area(geometry), ft^2),
-       valueperacre = TAXBASE / area_acres,
-       landvaluepsf = CURRLAND / area_ft_sq) -> baltimore_areas
+       valueperacre = total_assessed_value / area_acres,
+       landvaluepsf = (CURRLAND + LANDEXMP) / area_ft_sq) -> baltimore_areas
 ```
 
 ```{r initial analysis}
@@ -69,7 +70,7 @@ filter(baltimore_areas,
 filter(initial_analysis_lots,
        str_detect(PIN, "^1783")) -> bk_rofo_block
 
-rofo_vpa <- sum(bk_rofo_block$TAXBASE) / sum(bk_rofo_block$area_acres)
+rofo_vpa <- sum(bk_rofo_block$total_assessed_value) / sum(bk_rofo_block$area_acres)
 rofo_prop_tax <- sum(bk_rofo_block$CITY_TAX)
 rofo_land_value_psf <- sum(bk_rofo_block$CURRLAND) / sum(bk_rofo_block$area_ft_sq)
 
@@ -77,7 +78,7 @@ filter(initial_analysis_lots,
        str_detect(PIN, "^1784")) |>
   mutate(land_psf = CURRLAND / area_ft_sq) -> patterson_block
 
-patterson_vpa <- sum(patterson_block$TAXBASE) / sum(patterson_block$area_acres)
+patterson_vpa <- sum(patterson_block$total_assessed_value) / sum(patterson_block$area_acres)
 patterson_prop_tax <- sum(patterson_block$CITY_TAX)
 patterson_land_value_psf <- sum(patterson_block$CURRLAND) / sum(patterson_block$area_ft_sq)
 
@@ -88,10 +89,30 @@ patterson_vpa
 ```{r two-block-city}
 filter(baltimore_areas,
        BLOCK %in% c("1783 ", "1784 ")) -> two_block_city
-  arrange(desc(landvaluepsf)) |>
-  select(FULLADDR, landvaluepsf, valueperacre) 
 
-head(two_block_city)
+slice_max(two_block_city, landvaluepsf, n = 5) |>
+ arrange(desc(landvaluepsf)) |>
+  select(FULLADDR, total_assessed_value, area_ft_sq, area_acres, landvaluepsf, valueperacre) -> highest_assessed_land
+
+highest_assessed_land
+
+slice_min(two_block_city, landvaluepsf, n = 5) |>
+ arrange(desc(landvaluepsf)) |>
+  select(FULLADDR, total_assessed_value, area_ft_sq, area_acres, landvaluepsf, valueperacre) -> lowest_assessed_land
+
+lowest_assessed_land
+
+library(tmap)
+
+tmap_mode("view")
+
+tm_basemap(leaflet::providers$OpenStreetMap) +
+tm_shape(two_block_city) + 
+  tm_(border = "black") +
+tm_shape(lowest_assessed_land) +
+  tm_polygons(col = "red") +
+tm_shape(highest_assessed_land) +
+  tm_polygons(col = "green")
 
 ```
 
