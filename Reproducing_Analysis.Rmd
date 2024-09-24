@@ -12,13 +12,19 @@ library(sf)
 library(pbapply)
 library(stringr)
 library(dplyr)
+library(NISTunits)
+library(units)
 
 # I am so angry that this works
 baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&where=1=1&outFields=*&f=geojson")
 
-baltimore$PIN <- as.character(baltimore$PIN)
+baltimore_valid <- st_make_valid(baltimore)
 
-
+mutate(baltimore_valid,
+       area_acres = set_units(st_area(geometry), acres),
+       area_ft_sq = set_units(st_area(geometry), ft^2),
+       valueperacre = TAXBASE / area_acres,
+       landvaluepsf = CURRLAND / area_ft_sq) -> baltimore_areas
 ```
 
 ```{r initial analysis}
@@ -57,9 +63,37 @@ initial_analysis_sample = c("1783017A",
                             "1784053",
                             "1784052")
 
-filter(baltimore,
+filter(baltimore_areas,
        PIN %in% initial_analysis_sample) -> initial_analysis_lots
 
-filter(baltimore,
-       str_detect(PIN, "^1784")) -> bk_rofo_block
+filter(initial_analysis_lots,
+       str_detect(PIN, "^1783")) -> bk_rofo_block
+
+rofo_vpa <- sum(bk_rofo_block$TAXBASE) / sum(bk_rofo_block$area_acres)
+rofo_prop_tax <- sum(bk_rofo_block$CITY_TAX)
+rofo_land_value_psf <- sum(bk_rofo_block$CURRLAND) / sum(bk_rofo_block$area_ft_sq)
+
+filter(initial_analysis_lots,
+       str_detect(PIN, "^1784")) |>
+  mutate(land_psf = CURRLAND / area_ft_sq) -> patterson_block
+
+patterson_vpa <- sum(patterson_block$TAXBASE) / sum(patterson_block$area_acres)
+patterson_prop_tax <- sum(patterson_block$CITY_TAX)
+patterson_land_value_psf <- sum(patterson_block$CURRLAND) / sum(patterson_block$area_ft_sq)
+
+patterson_vpa
+
 ```
+
+```{r two-block-city}
+filter(baltimore_areas,
+       BLOCK %in% c("1783 ", "1784 ")) -> two_block_city
+  arrange(desc(landvaluepsf)) |>
+  select(FULLADDR, landvaluepsf, valueperacre) 
+
+head(two_block_city)
+
+```
+
+
+

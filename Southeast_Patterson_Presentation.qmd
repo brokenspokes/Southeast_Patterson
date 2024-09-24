@@ -18,18 +18,18 @@ resources:
 
 :::: {.columns}
 
-::: {.column width="50%"}
+::: {.column style="text-align:center;" width="50%"}
 Burger King/Rofo Block
-<img src="Images/royal_farms_block.png" height = "200" width="200" transform:rotate(180deg)>
-VPA: $973,811
+![rofo_block](./Images/royal_farms_block.png)
+VPA: `r sum(bk_rofo_block$TAXBASE)`
 Property Taxes Paid: $28,086
 Assessed Land Value PSF: $15
 
 :::
 
-::: {.column width="50%"}
+::: {.column width="50%" style="text-align:center;"}
 Patterson Bowling Block
-![patterson_block](./Images/Patterson_bowling_block.png){width = 50%, height = 50%}
+![patterson_block](./Images/Patterson_bowling_block.png){fig-align = "center" width = "50%", height = "50%"}
 VPA: $8,914,567
 Property Taxes Paid: $165,832
 Assessed Land Value PSF: $77
@@ -41,17 +41,4 @@ Assessed Land Value PSF: $77
 
 ## The 2-Block City
 
-``` r
-# Define a server for the Shiny app
-function(input, output) {
-  
-  # Fill in the spot we created for a plot
-  output$phonePlot <- renderPlot({
-    # Render a barplot
-  })
-}
-```
-
-::: footer
-Learn more: [Syntax Highlighting](https://quarto.org/docs/output-formats/html-code.html#highlighting)
-:::
+#
