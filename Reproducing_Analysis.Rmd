@@ -108,7 +108,7 @@ tmap_mode("view")
 
 tm_basemap(leaflet::providers$OpenStreetMap) +
 tm_shape(two_block_city) + 
-  tm_(border = "black") +
+  tm_polygons(border.col = "black") +
 tm_shape(lowest_assessed_land) +
   tm_polygons(col = "red") +
 tm_shape(highest_assessed_land) +
