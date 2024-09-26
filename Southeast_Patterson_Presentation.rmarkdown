@@ -48,6 +48,8 @@ initial_analysis_sample = c("1783017A", "1783017", "1784040", "1784036",
 
 
 
+
+
 ## Initial Patterson Bowling Analysis
 
 :::: {.columns}
@@ -61,6 +63,8 @@ Burger King/Rofo Block
 Patterson Bowling Block
 ![patterson_block](./Images/Patterson_bowling_block.png){fig-align = "center" width = "50%", height = "50%"}
 :::
+
+
 ```{r initial analysis}
 #| echo: false
 #| fig-cap: "Air Quality"
@@ -70,12 +74,13 @@ filter(baltimore_areas,
   group_by(BLOCK) |>
   summarise(Value_Per_Acre = sum(total_assessed_value) / sum(area_acres),
             Property_Tax = sum(CITY_TAX),
-            Land_Value_PSF = sum(CURRLAND) / sum(area_ft_sq))
-  column_to_rownames(var = ) |>
-  transpose() |>
+            Land_Value_PSF = sum(CURRLAND) / sum(area_ft_sq)) |>
+  transpose(make.names = "BLOCK") |>
   gt() |>
   fmt_number(decimals = 0)
 ```
+
+
 
 ::::
 
@@ -83,3 +88,4 @@ filter(baltimore_areas,
 ## The 2-Block City
 
 #
+
