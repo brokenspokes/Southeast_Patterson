@@ -7,48 +7,14 @@ format:
     chalkboard: 
       buttons: false
     preview-links: auto
-    logo: images/quarto.png
-    css: styles.css
     footer: <https://quarto.org>
 resources:
   - demo.pdf
 ---
 
-```{r setup, echo=FALSE, cache = TRUE}
-library(sf)
-library(stringr)
-library(dplyr)
-library(units)
-library(data.table)
-library(gt)
-
-# I am so angry that this works
-baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&where=1=1&outFields=*&f=geojson")
-
-baltimore_valid <- st_make_valid(baltimore)
-
-mutate(baltimore_valid,
-       total_assessed_value = CURRLAND + CURRIMPR + LANDEXMP + IMPREXMP,
-       area_acres = set_units(st_area(geometry), acres),
-       area_ft_sq = set_units(st_area(geometry), ft^2),
-       valueperacre = total_assessed_value / area_acres,
-       landvaluepsf = (CURRLAND + LANDEXMP) / area_ft_sq) |>
-  st_drop_geometry() -> baltimore_areas
-
-initial_analysis_sample = c("1783017A", "1783017", "1784040", "1784036",
-                            "1784035", "1784034", "1784033", "1784032",
-                            "1784031", "1784030", "1784029", "1784028",
-                            "1784027", "1784026", "1784025", "1784024",
-                            "1784023", "1784022", "1784021", "1784020",
-                            "1784019", "1784018", "1784017", "1784016",
-                            "1784061", "1784060", "1784059", "1784058",
-                            "1784057", "1784056", "1784055", "1784054",
-                            "1784053", "1784052")
-```
 
 
-
-## Initial Patterson Bowling Analysis
+## Initial Patterson Bowling Analysis {.text-center}
 
 :::: {.columns}
 
@@ -59,27 +25,30 @@ Burger King/Rofo Block
 
 ::: {.column width="50%" style="text-align:center;"}
 Patterson Bowling Block
-![patterson_block](./Images/Patterson_bowling_block.png){fig-align = "center" width = "50%", height = "50%"}
+![patterson_block](./Images/Patterson_bowling_block.png)
 :::
-```{r initial analysis}
-#| echo: false
-#| fig-cap: "Air Quality"
-
-filter(baltimore_areas,
-       PIN %in% initial_analysis_sample) |>
-  group_by(BLOCK) |>
-  summarise(Value_Per_Acre = sum(total_assessed_value) / sum(area_acres),
-            Property_Tax = sum(CITY_TAX),
-            Land_Value_PSF = sum(CURRLAND) / sum(area_ft_sq))
-  column_to_rownames(var = ) |>
-  transpose() |>
-  gt() |>
-  fmt_number(decimals = 0)
-```
 
 ::::
+
+<div style="text-align: center;">
+Two adjacent blocks, two very different uses of land
+</div>
+
+## Comparing financial productivity
+
+![](./Images/initial_analysis_comparison.png)
+
+
 
 
 ## The 2-Block City
 
-#
+![2_block_city](./Images/2_block_city.png)
+
+
+
+
+## Visualizing disparities in assessment value
+
+<iframe src="Images/two_block_city.html" width="100%" height="500px"></iframe>
+

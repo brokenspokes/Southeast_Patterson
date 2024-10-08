@@ -6,14 +6,16 @@ author: "Joshua Spokes"
 
 ```{r pull-city-data, cache = TRUE}
 # Load necessary libraries
-library(httr)
-library(jsonlite)
 library(sf)
-library(pbapply)
 library(stringr)
 library(dplyr)
-library(NISTunits)
-library(units)
+library(tibble)
+library(gt)
+library(webshot2)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(OpenStreetMap)
 
 # I am so angry that this works
 baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&where=1=1&outFields=*&f=geojson")
@@ -25,96 +27,81 @@ mutate(baltimore_valid,
        area_acres = set_units(st_area(geometry), acres),
        area_ft_sq = set_units(st_area(geometry), ft^2),
        valueperacre = total_assessed_value / area_acres,
-       landvaluepsf = (CURRLAND + LANDEXMP) / area_ft_sq) -> baltimore_areas
+       landvaluepsf = round((CURRLAND + LANDEXMP) / area_ft_sq, digits = 2)) -> baltimore_areas
+
+st_drop_geometry(baltimore_areas) -> baltimore_areas_no_geo
 ```
 
 ```{r initial analysis}
-initial_analysis_sample = c("1783017A",
-                            "1783017",
-                            "1784040",
-                            "1784036",
-                            "1784035",
-                            "1784034",
-                            "1784033",
-                            "1784032",
-                            "1784031",
-                            "1784030",
-                            "1784029",
-                            "1784028",
-                            "1784027",
-                            "1784026",
-                            "1784025",
-                            "1784024",
-                            "1784023",
-                            "1784022",
-                            "1784021",
-                            "1784020",
-                            "1784019",
-                            "1784018",
-                            "1784017",
-                            "1784016",
-                            "1784061",
-                            "1784060",
-                            "1784059",
-                            "1784058",
-                            "1784057",
-                            "1784056",
-                            "1784055",
-                            "1784054",
-                            "1784053",
-                            "1784052")
+initial_analysis_sample = c("1783017A", "1783017", "1784040", "1784036",
+                            "1784035", "1784034", "1784033", "1784032",
+                            "1784031", "1784030", "1784029", "1784028",
+                            "1784027", "1784026", "1784025", "1784024",
+                            "1784023", "1784022", "1784021", "1784020",
+                            "1784019", "1784018", "1784017", "1784016",
+                            "1784061", "1784060", "1784059", "1784058",
+                            "1784057", "1784056", "1784055", "1784054",
+                            "1784053", "1784052")
 
-filter(baltimore_areas,
-       PIN %in% initial_analysis_sample) -> initial_analysis_lots
+filter(baltimore_areas_no_geo,
+       PIN %in% initial_analysis_sample) |>
+  drop_units() |>
+  group_by(BLOCK) |>
+  summarise("Value Per Acre ($/acre)" = sum(total_assessed_value) / sum(area_acres),
+            "City Property Tax ($)" = sum(CITY_TAX),
+            "Land Value PSF ($/sf)" = round(sum(CURRLAND) / sum(area_ft_sq), digits = 2)) |>
+  t() |>
+  as.data.frame() |>
+  rownames_to_column() |>
+  rename(" " = rowname,
+         "Burger King/RoFo Block" = V1,
+         "Patterson Bowling Block" = V2
+         ) -> table_df
 
-filter(initial_analysis_lots,
-       str_detect(PIN, "^1783")) -> bk_rofo_block
-
-rofo_vpa <- sum(bk_rofo_block$total_assessed_value) / sum(bk_rofo_block$area_acres)
-rofo_prop_tax <- sum(bk_rofo_block$CITY_TAX)
-rofo_land_value_psf <- sum(bk_rofo_block$CURRLAND) / sum(bk_rofo_block$area_ft_sq)
-
-filter(initial_analysis_lots,
-       str_detect(PIN, "^1784")) |>
-  mutate(land_psf = CURRLAND / area_ft_sq) -> patterson_block
-
-patterson_vpa <- sum(patterson_block$total_assessed_value) / sum(patterson_block$area_acres)
-patterson_prop_tax <- sum(patterson_block$CITY_TAX)
-patterson_land_value_psf <- sum(patterson_block$CURRLAND) / sum(patterson_block$area_ft_sq)
-
-patterson_vpa
-
+gt(table_df) |>
+  fmt_number(decimals = 1,
+             suffixing =  TRUE) |>
+    cols_align(
+    align = "center",  # Specify center alignment
+    columns = everything()  # Apply to all columns
+  ) |>
+  gtsave("Images/initial_analysis_comparison.png")
 ```
 
 ```{r two-block-city}
 filter(baltimore_areas,
-       BLOCK %in% c("1783 ", "1784 ")) -> two_block_city
+       BLOCK %in% c("1783 ", "1784 ")) |>
+  select(FULLADDR,
+         total_assessed_value,
+         area_ft_sq,
+         area_acres,
+         landvaluepsf,
+         valueperacre
+         ) ->  two_block_city
 
-slice_max(two_block_city, landvaluepsf, n = 5) |>
- arrange(desc(landvaluepsf)) |>
-  select(FULLADDR, total_assessed_value, area_ft_sq, area_acres, landvaluepsf, valueperacre) -> highest_assessed_land
+slice_max(two_block_city,
+          landvaluepsf,
+          n = 5
+          ) |>
+  st_buffer(dist = 2) -> highest_assessed_land
 
-highest_assessed_land
-
-slice_min(two_block_city, landvaluepsf, n = 5) |>
- arrange(desc(landvaluepsf)) |>
-  select(FULLADDR, total_assessed_value, area_ft_sq, area_acres, landvaluepsf, valueperacre) -> lowest_assessed_land
-
-lowest_assessed_land
-
-library(tmap)
+slice_min(two_block_city,
+          landvaluepsf,
+          n = 5
+          ) |>
+  arrange(desc(landvaluepsf)) -> lowest_assessed_land
 
 tmap_mode("view")
 
-tm_basemap(leaflet::providers$OpenStreetMap) +
+two_block_city_map <- tm_basemap(leaflet::providers$Esri.WorldImagery) +
 tm_shape(two_block_city) + 
-  tm_polygons(border.col = "black") +
+   tm_fill(col = "gray", alpha = 0.2) +
 tm_shape(lowest_assessed_land) +
-  tm_polygons(col = "red") +
+  tm_borders(col = "red", lwd = 2) +
+  tm_text("landvaluepsf", col = "white", bg.color = "black") +
 tm_shape(highest_assessed_land) +
-  tm_polygons(col = "green")
+  tm_fill(col = "green", lwd = 2) +
+  tm_text("landvaluepsf", col = "black", auto.placement = TRUE)
 
+tmap_save(two_block_city_map, "Images/two_block_city.html")
 ```
-
-
-

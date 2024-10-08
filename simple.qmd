@@ -1,0 +1,24 @@
+---
+title: "Real Property Tax in Baltimore"
+subtitle: "Flaws in the current SDAT assessments of land"
+format:
+  revealjs: 
+    slide-number: true
+    chalkboard: 
+      buttons: false
+    preview-links: auto
+    footer: <https://quarto.org>
+resources:
+  - demo.pdf
+---
+
+## Basic
+
+- Should
+- Be
+- Easy
+
+## Hello
+
+- Cheese
+- Bread
