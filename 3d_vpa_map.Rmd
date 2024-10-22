@@ -1,0 +1,128 @@
+```{r pull-city-data, cache = TRUE}
+# Load necessary libraries
+library(sf)
+library(dplyr)
+library(units)
+
+# I am so angry that this works
+baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&where=1=1&outFields=*&f=geojson")
+
+baltimore_valid <- st_make_valid(baltimore)
+
+mutate(baltimore_valid,
+       total_assessed_value = CURRLAND + CURRIMPR + LANDEXMP + IMPREXMP,
+       area_acres = set_units(st_area(geometry), acres),
+       area_ft_sq = set_units(st_area(geometry), ft^2),
+       valueperacre = total_assessed_value / area_acres,
+       landvaluepsf = round((CURRLAND + LANDEXMP) / area_ft_sq, digits = 2)) -> baltimore_areas
+```
+
+```{r rayshader-testing}
+library(rayshader)
+library(terra)
+library(dplyr)
+library(RColorBrewer)
+library(scales)
+
+color_palette <- colorRampPalette(c("green", "yellow", "red"))
+
+height_colors <- color_palette(100)
+
+baltimore_areas |>
+  select(PIN,
+         BLOCK,
+         total_assessed_value,
+         area_acres) |>
+  group_by(BLOCK) |>
+  summarise(value_per_acre = sum(total_assessed_value) / sum(area_acres)
+            ) |>
+  mutate(value_per_acre = as.numeric(value_per_acre)
+         ) -> baltimore_blocks
+
+# # Create a palette function for generating a color gradient
+# color_palette <- grDevices::colorRampPalette(c("red", "green"))
+# 
+# # Rescale the 'value_per_acre' column and then generate the color values
+# baltimore_blocks$value_per_acre_scaled <- scales::rescale(baltimore_blocks$value_per_acre)
+# 
+# # Create a color vector based on the rescaled values
+# height_colors <- color_palette(100)[as.numeric(cut(baltimore_blocks$value_per_acre_scaled, breaks = 100))]
+# 
+# # Create a blank raster for colors
+# r_color <- rast(ext(vect(baltimore_blocks)), resolution = 0.0001, crs = st_crs(baltimore_blocks)$proj4string)
+# 
+# # Rasterize the colors based on the value_per_acre column
+# rasterized_colors <- rasterize(vect(baltimore_blocks), r_color, field = "value_per_acre_scaled")
+# 
+# # Convert the color raster to a matrix and ensure the correct format
+# color_matrix <- as.matrix(rasterized_colors, wide = TRUE)
+# color_matrix <- t(color_matrix)  # Transpose to match rayshader's orientation
+
+
+
+
+r <- rast(ext(vect(baltimore_blocks)),
+          resolution= 0.0001,
+          crs = "EPSG:4326"
+          )
+
+rasterized <- rasterize(vect(baltimore_blocks),
+                        r,
+                        field = "value_per_acre")
+
+
+
+height_matrix <- as.matrix(rasterized, wide = TRUE)
+
+height_matrix <- t(height_matrix)
+
+# Add height data to the rayshader plot
+height_matrix %>%
+  height_shade(texture = height_colors) %>%
+  plot_3d(height_matrix, zscale = 500000, fov = 30, theta = 315, phi = 20, windowsize = c(800, 800))
+
+# Render the 3D plot
+render_snapshot()
+
+
+
+```
+
+```{r without-exempt-values}
+baltimore_areas |>
+  select(PIN,
+         BLOCK,
+         CURRLAND,
+         CURRIMPR,
+         total_assessed_value,
+         area_acres) |>
+  group_by(BLOCK) |>
+  summarise(value_per_acre = (sum(CURRLAND) + sum(CURRIMPR)) / sum(area_acres)
+            ) |>
+  mutate(value_per_acre = as.numeric(value_per_acre)
+         ) -> baltimore_blocks_taxpayers
+
+r <- rast(ext(vect(baltimore_blocks_taxpayers)),
+          resolution= 0.0001,
+          crs = "EPSG:4326"
+          )
+
+rasterized <- rasterize(vect(baltimore_blocks_taxpayers),
+                        r,
+                        field = "value_per_acre")
+
+
+
+height_matrix <- as.matrix(rasterized, wide = TRUE)
+
+height_matrix <- t(height_matrix)
+
+# Add height data to the rayshader plot
+height_matrix %>%
+  height_shade(texture = height_colors) %>%
+  plot_3d(height_matrix, zscale = 500000, fov = 30, theta = 315, phi = 20, windowsize = c(800, 800))
+
+# Render the 3D plot
+render_snapshot()
+
+```

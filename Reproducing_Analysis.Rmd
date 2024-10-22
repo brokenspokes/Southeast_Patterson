@@ -16,6 +16,9 @@ library(ggplot2)
 library(tmap)
 library(tmaptools)
 library(OpenStreetMap)
+library(units)
+library(arcgislayers)
+library(arcgis)
 
 # I am so angry that this works
 baltimore <- st_read("https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&where=1=1&outFields=*&f=geojson")
@@ -28,8 +31,38 @@ mutate(baltimore_valid,
        area_ft_sq = set_units(st_area(geometry), ft^2),
        valueperacre = total_assessed_value / area_acres,
        landvaluepsf = round((CURRLAND + LANDEXMP) / area_ft_sq, digits = 2)) -> baltimore_areas
+```
 
+```{r whole-neighborhoods}
+
+filter(baltimore_areas,
+       NEIGHBOR %in% c("BELAIR-EDISON                            ",
+                       "ROLAND PARK                              ")
+       ) |>
+  select(FULLADDR,
+         valueperacre,
+         NEIGHBOR,
+         total_assessed_value,
+         area_acres) -> quicklook
+
+st_drop_geometry(baltimore_areas) |>
+group_by(NEIGHBOR) |>
+  summarise(total_currvalue = sum(CURRLAND) + sum(CURRIMPR),
+            ave_vpa_currland_only = (sum(CURRLAND) + sum(CURRIMPR)) / sum(area_acres),
+            avg_vpa = sum(total_assessed_value) / sum(area_acres)) -> avg_neighborhood_vpa
+
+write.csv(avg_neighborhood_vpa, "neighborhood_vpas.csv")
 st_drop_geometry(baltimore_areas) -> baltimore_areas_no_geo
+```
+
+```{r testing}
+baltimore_valid |>
+  mutate(NEIGHBOR = trimws(NEIGHBOR)) |>
+  filter(NEIGHBOR == "HAMPDEN") -> hampden
+
+hampden |> 
+  smallest_area(value = "CURRLAND", percent = 10) -> smalles_area_hampden
+
 ```
 
 ```{r initial analysis}
