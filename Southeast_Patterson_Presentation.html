@@ -30,6 +30,10 @@
     }
   </style>
   <link rel="stylesheet" href="Southeast_Patterson_Presentation_files/libs/revealjs/dist/theme/quarto.css">
+<<<<<<< HEAD
+=======
+  <link rel="stylesheet" href="styles.css">
+>>>>>>> 0b4a764fe8345fd759afcbcbeb7aaa145b918ccc
   <link href="Southeast_Patterson_Presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="Southeast_Patterson_Presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="Southeast_Patterson_Presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -334,6 +338,7 @@
 </div>
 
 </section>
+<<<<<<< HEAD
 <section id="initial-patterson-bowling-analysis" class="slide level2 text-center">
 <h2>Initial Patterson Bowling Analysis</h2>
 <div class="columns">
@@ -359,6 +364,39 @@
 <iframe src="Images/two_block_city.html" width="100%" height="500px">
 </iframe>
 <div class="quarto-auto-generated-content">
+=======
+<section class="slide level2">
+
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `OGRGeoJSON' from data source 
+  `https://geodata.baltimorecity.gov/egis/rest/services/CityView/Realproperty_OB/FeatureServer/0/query?returnGeometry=true&amp;where=1=1&amp;outFields=*&amp;f=geojson' 
+  using driver `GeoJSON'
+Simple feature collection with 238183 features and 79 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -76.71131 ymin: 39.19729 xmax: -76.52967 ymax: 39.37202
+Geodetic CRS:  WGS 84</code></pre>
+</div>
+</div>
+</section>
+<section id="initial-patterson-bowling-analysis" class="slide level2">
+<h2>Initial Patterson Bowling Analysis</h2>
+<div class="columns">
+<div class="column" style="text-align:center;">
+<p>Burger King/Rofo Block <img data-src="./Images/royal_farms_block.png" alt="rofo_block"> VPA: <span class="citation" data-cites="rofo_vpa">@rofo_vpa</span> Property Taxes Paid: $28,086 Assessed Land Value PSF: $15</p>
+</div><div class="column" style="text-align:center;">
+<p>Patterson Bowling Block <img data-src="./Images/Patterson_bowling_block.png" alt="patterson_block">{fig-align = “center” width = “50%”, height = “50%”} VPA: $8,914,567 Property Taxes Paid: $165,832 Assessed Land Value PSF: $77</p>
+</div></div>
+</section>
+<section id="the-2-block-city" class="slide level2">
+<h2>The 2-Block City</h2>
+</section>
+<section id="section" class="title-slide slide level1 center">
+<h1></h1>
+<div class="quarto-auto-generated-content">
+<p><img src="images/quarto.png" class="slide-logo"></p>
+>>>>>>> 0b4a764fe8345fd759afcbcbeb7aaa145b918ccc
 <div class="footer footer-default">
 <p><a href="https://quarto.org" class="uri">https://quarto.org</a></p>
 </div>
@@ -576,6 +614,47 @@
         ]
       });
     </script>
+<<<<<<< HEAD
+=======
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
+>>>>>>> 0b4a764fe8345fd759afcbcbeb7aaa145b918ccc
     <script id="quarto-html-after-body" type="application/javascript">
     window.document.addEventListener("DOMContentLoaded", function (event) {
       const toggleBodyColorMode = (bsSheetEl) => {

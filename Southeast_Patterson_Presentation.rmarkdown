@@ -7,21 +7,13 @@ format:
     chalkboard: 
       buttons: false
     preview-links: auto
-<<<<<<< HEAD
-=======
     logo: images/quarto.png
     css: styles.css
->>>>>>> 0b4a764fe8345fd759afcbcbeb7aaa145b918ccc
     footer: <https://quarto.org>
 resources:
   - demo.pdf
 ---
 
-<<<<<<< HEAD
-
-
-## Initial Patterson Bowling Analysis {.text-center}
-=======
 ```{r setup, echo=FALSE, cache = TRUE}
 library(sf)
 library(stringr)
@@ -56,8 +48,9 @@ initial_analysis_sample = c("1783017A", "1783017", "1784040", "1784036",
 
 
 
+
+
 ## Initial Patterson Bowling Analysis
->>>>>>> 0b4a764fe8345fd759afcbcbeb7aaa145b918ccc
 
 :::: {.columns}
 
@@ -68,37 +61,10 @@ Burger King/Rofo Block
 
 ::: {.column width="50%" style="text-align:center;"}
 Patterson Bowling Block
-<<<<<<< HEAD
-![patterson_block](./Images/Patterson_bowling_block.png)
-:::
-
-::::
-
-<div style="text-align: center;">
-Two adjacent blocks, two very different uses of land
-</div>
-
-## Comparing financial productivity
-
-![](./Images/initial_analysis_comparison.png)
-
-
-
-
-## The 2-Block City
-
-![2_block_city](./Images/2_block_city.png)
-
-
-
-
-## Visualizing disparities in assessment value
-
-<iframe src="Images/two_block_city.html" width="100%" height="500px"></iframe>
-
-=======
 ![patterson_block](./Images/Patterson_bowling_block.png){fig-align = "center" width = "50%", height = "50%"}
 :::
+
+
 ```{r initial analysis}
 #| echo: false
 #| fig-cap: "Air Quality"
@@ -108,12 +74,13 @@ filter(baltimore_areas,
   group_by(BLOCK) |>
   summarise(Value_Per_Acre = sum(total_assessed_value) / sum(area_acres),
             Property_Tax = sum(CITY_TAX),
-            Land_Value_PSF = sum(CURRLAND) / sum(area_ft_sq))
-  column_to_rownames(var = ) |>
-  transpose() |>
+            Land_Value_PSF = sum(CURRLAND) / sum(area_ft_sq)) |>
+  transpose(make.names = "BLOCK") |>
   gt() |>
   fmt_number(decimals = 0)
 ```
+
+
 
 ::::
 
@@ -121,4 +88,4 @@ filter(baltimore_areas,
 ## The 2-Block City
 
 #
->>>>>>> 0b4a764fe8345fd759afcbcbeb7aaa145b918ccc
+
